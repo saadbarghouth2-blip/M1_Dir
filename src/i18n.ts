@@ -46,7 +46,52 @@ export const ui = {
     activeVehicles: "محاكاة المركبات النشطة",
     car: "سيارة",
     bus: "حافلة",
-    truck: "شاحنة"
+    truck: "شاحنة",
+    exitMap: "خروج",
+    expandMap: "تكبير الخريطة",
+    hideLegend: "إخفاء المفتاح",
+    showLegend: "مفتاح الخريطة",
+    vehiclesMoveNote: "تتحرك المركبات بالاتجاه الصحيح وبسرعة تترابط لحظياً مع السرعة التشغيلية الفعلية للمسار.",
+    densityColoring: "تلوين الكثافة والتدفق",
+    densityColoringText: "يتم تلوين مسارات الطرق ديناميكياً بناءً على حجم السيارات في الساعة (الأحمر = ازدحام، الأخضر = انسيابي).",
+    routeFlowStatus: "حالة انسياب المسارات",
+    detectors: "كواشف محطات الرصد",
+    people: "أفراد",
+    vehicles: "مركبة",
+    vehiclesPerHour: "مركبة/ساعة",
+    kmPerHour: "كم/ساعة",
+    meter: "م",
+    squareMeter: "م²",
+    zone: "المنطقة المرورية",
+    zoneNumber: "رقم المنطقة",
+    area: "المساحة",
+    route: "مسار حركة",
+    observer: "الراصد",
+    trafficCount: "حجم المرور والعد",
+    trafficFlowState: "حالة تدفق السير",
+    currentFlowVolume: "حجم التدفق الحالي",
+    observedCurrentFlow: "التدفق المرصود الحالي",
+    operatingSpeed: "السرعة التشغيلية",
+    directionDistribution: "توزيع الاتجاهات",
+    quickRouteFilter: "انقر للتصفية السريعة للمسار",
+    currentOccupancy: "معدل الإشغال اللحظي",
+    totalPassingFlow: "إجمالي التدفق المار",
+    clickPersonOnly: "اضغط على رمز كل شخص لعرض المركبات المخصصة له فقط.",
+    filterStation: "انقر لتصفية التقارير لهذه المحطة",
+    fieldCrew: "طاقم الرصد الميداني",
+    observedLoad: "معدل التحميل المرصود",
+    activeFlowTotal: "إجمالي التدفق النشط",
+    filterJunction: "انقر لتصفية التقارير لهذا التقاطع",
+    personPosition: "موقع الشخص حول النقطة",
+    criticalOccupancy: "معدل إشغال حرج (> 75% من السعة)",
+    mediumOccupancy: "معدل إشغال متوسط (40% - 75% من السعة)",
+    lowOccupancy: "معدل إشغال منخفض (< 40% من السعة)",
+    heavyCongestedFlow: "تدفق كثيف ومزدحم (> 1500 مركبة/ساعة)",
+    mediumActiveFlow: "تدفق متوسط ونشط (800 - 1500)",
+    lowSmoothFlow: "تدفق منخفض وسلس (< 800)",
+    congestedSlow: "مزدحم ومتباطئ",
+    mediumDense: "متوسط وكثيف",
+    smooth: "سلس وانسيابي"
   },
   en: {
     languageLabel: "العربية",
@@ -93,6 +138,114 @@ export const ui = {
     activeVehicles: "Live Vehicle Simulation",
     car: "Car",
     bus: "Bus",
-    truck: "Truck"
+    truck: "Truck",
+    exitMap: "Exit",
+    expandMap: "Expand map",
+    hideLegend: "Hide legend",
+    showLegend: "Map legend",
+    vehiclesMoveNote: "Vehicles move in the correct direction and their speed updates with the route operating speed.",
+    densityColoring: "Density and Flow Coloring",
+    densityColoringText: "Road routes are colored dynamically by hourly vehicle volume (red = congested, green = smooth).",
+    routeFlowStatus: "Route Flow Status",
+    detectors: "Count Station Detectors",
+    people: "people",
+    vehicles: "vehicles",
+    vehiclesPerHour: "vehicles/hour",
+    kmPerHour: "km/h",
+    meter: "m",
+    squareMeter: "m²",
+    zone: "Traffic Zone",
+    zoneNumber: "Zone ID",
+    area: "Area",
+    route: "Movement route",
+    observer: "Observer",
+    trafficCount: "Traffic count",
+    trafficFlowState: "Traffic flow state",
+    currentFlowVolume: "Current flow volume",
+    observedCurrentFlow: "Current observed flow",
+    operatingSpeed: "Operating speed",
+    directionDistribution: "Direction distribution",
+    quickRouteFilter: "Click to quickly filter this route",
+    currentOccupancy: "Current occupancy",
+    totalPassingFlow: "Total passing flow",
+    clickPersonOnly: "Click each staff symbol to show only its assigned vehicle classes.",
+    filterStation: "Click to filter reports for this station",
+    fieldCrew: "Field monitoring crew",
+    observedLoad: "Observed load",
+    activeFlowTotal: "Total active flow",
+    filterJunction: "Click to filter reports for this junction",
+    personPosition: "Person position around point",
+    criticalOccupancy: "Critical occupancy (> 75% of capacity)",
+    mediumOccupancy: "Medium occupancy (40% - 75% of capacity)",
+    lowOccupancy: "Low occupancy (< 40% of capacity)",
+    heavyCongestedFlow: "Heavy congested flow (> 1500 vehicles/hour)",
+    mediumActiveFlow: "Medium active flow (800 - 1500)",
+    lowSmoothFlow: "Low smooth flow (< 800)",
+    congestedSlow: "Congested and slow",
+    mediumDense: "Medium and dense",
+    smooth: "Smooth and free-flowing"
   }
 } as const;
+
+const vehicleTerms: Record<string, string> = {
+  "ملاكي / تاكسي": "Passenger car / taxi",
+  "ميكروباص / فان": "Microbus / van",
+  "ميني باص / كوستر": "Minibus / coaster",
+  "أتوبيس": "Bus",
+  "نقل خفيف": "Light truck",
+  "نقل متوسط (جامبو)": "Medium truck (jumbo)",
+  "نقل ثقيل (كساحة)": "Heavy truck (low-bed)",
+  "نقل ثقيل (مقطورة)": "Heavy truck (trailer)",
+  "موتوسيكل / توكتوك / تريسيكل": "Motorcycle / tuk-tuk / tricycle",
+  "معدات": "Equipment"
+};
+
+const roleTerms: Record<string, string> = {
+  "عداد تصنيفي": "Classified counter",
+  "عداد شامل": "Total counter",
+  "راصد": "Observer",
+  "رائد حركة": "Traffic lead",
+  "مهندس حركة": "Traffic engineer",
+  "مشرف شبكة": "Network supervisor",
+  "فني صيانة": "Maintenance technician",
+  "خبير ذكاء": "Intelligence specialist",
+  "مراقب بلدي": "Municipal observer",
+  "راصد ميداني": "Field observer"
+};
+
+const stationLabels: Record<string, string> = {
+  A1: "First count station",
+  A2: "Second count station",
+  A3: "Third count station",
+  A4: "Fourth count station",
+  A5: "Fifth count station",
+  A6: "Sixth count station",
+  A7: "Seventh count station"
+};
+
+export const translateRole = (role: string, language: Language) =>
+  language === "en" ? roleTerms[role] || role : role;
+
+export const translateStationLabel = (code: string, fallback: string, language: Language) =>
+  language === "en" ? stationLabels[code] || fallback : fallback;
+
+export const splitVehicleTask = (task: string, language: Language) =>
+  task
+    .split("،")
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map((item) => language === "en" ? vehicleTerms[item] || item : item);
+
+export const getDirectionRole = (code: string, language: Language) => {
+  const group = code.split("-")[0];
+  const roleByGroup: Record<string, string> = {
+    J2: "رائد حركة",
+    J3: "مهندس حركة",
+    J4: "مشرف شبكة",
+    J5: "فني صيانة",
+    J6: "خبير ذكاء",
+    J7: "مراقب بلدي",
+    J8: "راصد ميداني"
+  };
+  return translateRole(roleByGroup[group] || "راصد ميداني", language);
+};

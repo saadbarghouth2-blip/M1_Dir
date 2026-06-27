@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { TrafficCount, VehicleClass } from "../types";
 import { Language } from "../i18n";
 import { Database, RefreshCw, ExternalLink, CheckCircle2, Terminal, Send, Wifi, Settings } from "lucide-react";
@@ -25,25 +25,53 @@ export const SyncHub: React.FC<SyncHubProps> = ({
   language = "ar"
 }) => {
   const isEn = language === "en";
+  const syncText = {
+    ready: isEn ? "External sync system is ready to publish data..." : "نظام الربط الخارجي جاهز ومستعد لبث البيانات...",
+    standardName: isEn ? "Advanced Traffic Counting and Monitoring System" : "نظام عد ومراقبة حركة المرور المتقدم",
+    standardDesc: isEn ? "Central system for traffic monitoring and smart signal observation." : "النظام المركزي لمراقبة الحركة ورصد الإشارات الذكية.",
+    remixName: isEn ? "Traffic Counting System - Remix" : "نظام عد حركة المرور - ريمكس",
+    remixDesc: isEn ? "Interactive analytics dashboard for integrated Remix traffic flows." : "لوحة التحكم البيانية التفاعلية لتحليل تدفقات ريمكس المتكاملة.",
+    destinationPlatform: isEn ? "First: choose the destination platform" : "أولاً: اختر منصة التصدير المستهدفة",
+    dataScope: isEn ? "Second: select exported data scope" : "ثانياً: حدد نطاق مخرجات البيانات المصدرة",
+    generalStats: isEn ? "General network indicators" : "المؤشرات العامة للشبكة",
+    activeHour: isEn ? "Active simulation hour" : "ساعة المحاكاة النشطة",
+    selectedElement: isEn ? "Currently selected element" : "العنصر المختار حالياً",
+    selectFirstTitle: isEn ? "Select a junction or route on the map first to enable this scope" : "قم بتحديد تقاطع أو مسار على الخريطة أولاً لتفعيل هذا النطاق",
+    selectFirstWarn: isEn ? "Please select a junction or route on the map first to export this scope." : "الرجاء تحديد تقاطع أو مسار على الخريطة أولاً لتفعيل تصدير هذا الجزء.",
+    syncTitle: isEn ? "Sync and publish outputs in real time" : "مزامنة وبث المخرجات لحظياً",
+    syncDesc: isEn ? "Data packets will be sent using the structure shown in the side preview." : "سيتم إرسال حزم البيانات بالبنية الموضحة في المعاينة الجانبية.",
+    exporting: isEn ? "Exporting..." : "جاري التصدير...",
+    sendOutputs: isEn ? "Send and sync outputs" : "إرسال ومزامنة المخرجات",
+    sendStatus: isEn ? "Transmission status:" : "حالة بث الإرسال:",
+    payloadPreview: isEn ? "Synced GIS output package preview (Live JSON)" : "معاينة حزمة مخرجات الـ GIS المزامنة (Live JSON)",
+    logs: isEn ? "Sync logs (Terminal Logs)" : "سجل المزامنة (Terminal Logs)",
+    openLink: isEn ? "Open link in a new window" : "فتح الرابط في نافذة جديدة"
+  };
   const [activeTarget, setActiveTarget] = useState<"standard" | "remix">("standard");
   const [dataScope, setDataScope] = useState<"all" | "selected-hour" | "selected-node">("all");
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncLogs, setSyncLogs] = useState<string[]>([
-    "نظام الربط الخارجي جاهز ومستعد لبث البيانات...",
+    syncText.ready,
   ]);
   const [syncStatus, setSyncStatus] = useState<"idle" | "success" | "error">("idle");
   const [progress, setProgress] = useState(0);
 
+  useEffect(() => {
+    if (!isSyncing && progress === 0) {
+      setSyncLogs([syncText.ready]);
+    }
+  }, [isEn]);
+
   const targets = {
     standard: {
-      name: "نظام عد ومراقبة حركة المرور المتقدم",
+      name: syncText.standardName,
       url: "https://traffic-counting-system-670121413550.europe-west2.run.app",
-      description: "النظام المركزي لمراقبة الحركة ورصد الإشارات الذكية.",
+      description: syncText.standardDesc,
     },
     remix: {
-      name: "نظام عد حركة المرور - ريمكس",
+      name: syncText.remixName,
       url: "https://remix-traffic-counting-system-670121413550.europe-west2.run.app",
-      description: "لوحة التحكم البيانية التفاعلية لتحليل تدفقات ريمكس المتكاملة.",
+      description: syncText.remixDesc,
     },
   };
 
@@ -126,17 +154,17 @@ export const SyncHub: React.FC<SyncHubProps> = ({
     const targetName = targets[activeTarget].name;
     
     const newLogs = [
-      `[${new Date().toLocaleTimeString()}] جاري بدء عملية المزامنة وتصدير المخرجات...`,
-      `[${new Date().toLocaleTimeString()}] استهداف المنصة الخارجية: ${targetName}`,
-      `[${new Date().toLocaleTimeString()}] تجهيز حزم البيانات بصيغة JSON...`
+      `[${new Date().toLocaleTimeString()}] ${isEn ? "Starting output export and sync..." : "جاري بدء عملية المزامنة وتصدير المخرجات..."}`,
+      `[${new Date().toLocaleTimeString()}] ${isEn ? "Target external platform" : "استهداف المنصة الخارجية"}: ${targetName}`,
+      `[${new Date().toLocaleTimeString()}] ${isEn ? "Preparing JSON data packets..." : "تجهيز حزم البيانات بصيغة JSON..."}`
     ];
     setSyncLogs(newLogs);
 
     // Simulated progress steps
     const steps = [
-      { p: 25, log: `[${new Date().toLocaleTimeString()}] تشفير حزمة البيانات وحساب مؤشرات الفرز المروري...` },
-      { p: 55, log: `[${new Date().toLocaleTimeString()}] فتح قناة الاتصال مع العنوان: ${targetUrl}` },
-      { p: 75, log: `[${new Date().toLocaleTimeString()}] إرسال البيانات عبر بروتوكول HTTP POST (Payload size: ${JSON.stringify(payload).length} bytes)...` }
+      { p: 25, log: `[${new Date().toLocaleTimeString()}] ${isEn ? "Encoding data packet and calculating traffic indicators..." : "تشفير حزمة البيانات وحساب مؤشرات الفرز المروري..."}` },
+      { p: 55, log: `[${new Date().toLocaleTimeString()}] ${isEn ? "Opening connection channel to" : "فتح قناة الاتصال مع العنوان"}: ${targetUrl}` },
+      { p: 75, log: `[${new Date().toLocaleTimeString()}] ${isEn ? "Sending data via HTTP POST" : "إرسال البيانات عبر بروتوكول HTTP POST"} (Payload size: ${JSON.stringify(payload).length} bytes)...` }
     ];
 
     for (let i = 0; i < steps.length; i++) {
@@ -165,8 +193,8 @@ export const SyncHub: React.FC<SyncHubProps> = ({
       setSyncStatus("success");
       setSyncLogs(prev => [
         ...prev,
-        `[${new Date().toLocaleTimeString()}] استجابة ناجحة (200 OK / Opacity Connection Established).`,
-        `[${new Date().toLocaleTimeString()}] تم المزامنة بنجاح! مخرجات الـ GIS تظهر الآن في النظام المستهدف. ✅`
+        `[${new Date().toLocaleTimeString()}] ${isEn ? "Successful response" : "استجابة ناجحة"} (200 OK / Opacity Connection Established).`,
+        `[${new Date().toLocaleTimeString()}] ${isEn ? "Sync completed successfully. GIS outputs are now available in the target system." : "تم المزامنة بنجاح! مخرجات الـ GIS تظهر الآن في النظام المستهدف."} ✅`
       ]);
     } catch (err: any) {
       setProgress(100);
@@ -174,8 +202,8 @@ export const SyncHub: React.FC<SyncHubProps> = ({
       setSyncStatus("success");
       setSyncLogs(prev => [
         ...prev,
-        `[${new Date().toLocaleTimeString()}] تم إرسال وتصدير البيانات بالكامل إلى السيرفر بنجاح.`,
-        `[${new Date().toLocaleTimeString()}] حالة النظام: متصل وجاهز للاستقبال. ✅`
+        `[${new Date().toLocaleTimeString()}] ${isEn ? "Data has been fully sent and exported to the server." : "تم إرسال وتصدير البيانات بالكامل إلى السيرفر بنجاح."}`,
+        `[${new Date().toLocaleTimeString()}] ${isEn ? "System status: connected and ready to receive." : "حالة النظام: متصل وجاهز للاستقبال."} ✅`
       ]);
     } finally {
       setIsSyncing(false);
@@ -213,13 +241,13 @@ export const SyncHub: React.FC<SyncHubProps> = ({
         <div className="lg:col-span-7 space-y-5">
           {/* 1. Target platform selector */}
           <div>
-            <span className="text-indigo-400 text-xs font-bold block mb-2">أولاً: اختر منصة التصدير المستهدفة (Destination Platform)</span>
+            <span className="text-indigo-400 text-xs font-bold block mb-2">{syncText.destinationPlatform}</span>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => {
                   setActiveTarget("standard");
-                  setSyncLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] تم تبديل المنصة المستهدفة إلى: نظام عد ومراقبة حركة المرور المتقدم`]);
+                  setSyncLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${isEn ? "Target platform switched to" : "تم تبديل المنصة المستهدفة إلى"}: ${syncText.standardName}`]);
                 }}
                 className={`text-right p-4 rounded-xl border transition-all relative cursor-pointer flex flex-col justify-between h-28 ${
                   activeTarget === "standard"
@@ -239,7 +267,7 @@ export const SyncHub: React.FC<SyncHubProps> = ({
                     rel="noreferrer"
                     onClick={(e) => e.stopPropagation()}
                     className="text-slate-400 hover:text-white p-1 hover:bg-slate-800 rounded transition-colors"
-                    title="فتح الرابط في نافذة جديدة"
+                    title={syncText.openLink}
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
                   </a>
@@ -250,7 +278,7 @@ export const SyncHub: React.FC<SyncHubProps> = ({
                 type="button"
                 onClick={() => {
                   setActiveTarget("remix");
-                  setSyncLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] تم تبديل المنصة المستهدفة إلى: نظام عد حركة المرور - ريمكس`]);
+                  setSyncLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${isEn ? "Target platform switched to" : "تم تبديل المنصة المستهدفة إلى"}: ${syncText.remixName}`]);
                 }}
                 className={`text-right p-4 rounded-xl border transition-all relative cursor-pointer flex flex-col justify-between h-28 ${
                   activeTarget === "remix"
@@ -270,7 +298,7 @@ export const SyncHub: React.FC<SyncHubProps> = ({
                     rel="noreferrer"
                     onClick={(e) => e.stopPropagation()}
                     className="text-slate-400 hover:text-white p-1 hover:bg-slate-800 rounded transition-colors"
-                    title="فتح الرابط في نافذة جديدة"
+                    title={syncText.openLink}
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
                   </a>
@@ -281,7 +309,7 @@ export const SyncHub: React.FC<SyncHubProps> = ({
 
           {/* 2. Data Scope Selector */}
           <div>
-            <span className="text-indigo-400 text-xs font-bold block mb-2">ثانياً: حدد نطاق مخرجات البيانات المصدرة (Data Scope)</span>
+            <span className="text-indigo-400 text-xs font-bold block mb-2">{syncText.dataScope}</span>
             <div className="grid grid-cols-3 gap-2 text-xs">
               <button
                 type="button"
@@ -292,7 +320,7 @@ export const SyncHub: React.FC<SyncHubProps> = ({
                     : "bg-slate-950/40 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200"
                 }`}
               >
-                المؤشرات العامة للشبكة
+                {syncText.generalStats}
               </button>
               <button
                 type="button"
@@ -303,7 +331,7 @@ export const SyncHub: React.FC<SyncHubProps> = ({
                     : "bg-slate-950/40 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200"
                 }`}
               >
-                ساعة المحاكاة النشطة ({selectedHour.toString().padStart(2, "0")}:00)
+                {syncText.activeHour} ({selectedHour.toString().padStart(2, "0")}:00)
               </button>
               <button
                 type="button"
@@ -316,13 +344,13 @@ export const SyncHub: React.FC<SyncHubProps> = ({
                     ? "bg-slate-800 text-white border-indigo-500/60 cursor-pointer"
                     : "bg-slate-950/40 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200 cursor-pointer"
                 }`}
-                title={(!selectedJunction && !selectedDirection) ? "قم بتحديد تقاطع أو مسار على الخريطة أولاً لتفعيل هذا النطاق" : ""}
+                title={(!selectedJunction && !selectedDirection) ? syncText.selectFirstTitle : ""}
               >
-                العنصر المختار حالياً
+                {syncText.selectedElement}
               </button>
             </div>
             {(!selectedJunction && !selectedDirection) && dataScope === "selected-node" && (
-              <p className="text-[10px] text-amber-500 mt-1.5 font-medium">⚠️ الرجاء تحديد تقاطع أو مسار على الخريطة أولاً لتفعيل تصدير هذا الجزء.</p>
+              <p className="text-[10px] text-amber-500 mt-1.5 font-medium">⚠️ {syncText.selectFirstWarn}</p>
             )}
           </div>
 
@@ -330,8 +358,8 @@ export const SyncHub: React.FC<SyncHubProps> = ({
           <div className="bg-slate-950/40 border border-slate-800/80 rounded-xl p-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <span className="text-white font-bold text-sm block">مزامنة وبث المخرجات لحظياً</span>
-                <p className="text-slate-400 text-[10px] mt-0.5">سيتم إرسال حزم البيانات بالبنية الموضحة في المعاينة الجانبية.</p>
+                <span className="text-white font-bold text-sm block">{syncText.syncTitle}</span>
+                <p className="text-slate-400 text-[10px] mt-0.5">{syncText.syncDesc}</p>
               </div>
 
               <button
@@ -343,12 +371,12 @@ export const SyncHub: React.FC<SyncHubProps> = ({
                 {isSyncing ? (
                   <>
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>جاري التصدير...</span>
+                    <span>{syncText.exporting}</span>
                   </>
                 ) : (
                   <>
                     <Send className="w-3.5 h-3.5" />
-                    <span>إرسال ومزامنة المخرجات</span>
+                    <span>{syncText.sendOutputs}</span>
                   </>
                 )}
               </button>
@@ -358,7 +386,7 @@ export const SyncHub: React.FC<SyncHubProps> = ({
             {(isSyncing || progress > 0) && (
               <div className="mt-4 pt-3 border-t border-slate-800/60">
                 <div className="flex justify-between items-center text-[10px] text-slate-400 mb-1.5 font-mono">
-                  <span>حالة بث الإرسال:</span>
+                  <span>{syncText.sendStatus}</span>
                   <span className="text-indigo-400 font-bold">{progress}%</span>
                 </div>
                 <div className="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
@@ -374,7 +402,7 @@ export const SyncHub: React.FC<SyncHubProps> = ({
 
         {/* Right Column: Live JSON Payload Preview & Console (5 Cols) */}
         <div className="lg:col-span-5 flex flex-col h-[340px]">
-          <span className="text-indigo-400 text-xs font-bold block mb-2">معاينة حزمة مخرجات الـ GIS المزامنة (Live JSON)</span>
+          <span className="text-indigo-400 text-xs font-bold block mb-2">{syncText.payloadPreview}</span>
           <div className="flex-1 flex flex-col rounded-xl border border-slate-800 overflow-hidden bg-slate-950">
             {/* Tab header to switch between JSON Preview and Console logs */}
             <div className="flex bg-slate-900/60 border-b border-slate-800 text-[10px] font-bold text-slate-400">
@@ -384,7 +412,7 @@ export const SyncHub: React.FC<SyncHubProps> = ({
               </div>
               <div className="py-2 px-4 flex items-center gap-1.5">
                 <Terminal className="w-3 h-3 text-emerald-500" />
-                <span>سجل المزامنة (Terminal Logs)</span>
+                <span>{syncText.logs}</span>
               </div>
             </div>
 

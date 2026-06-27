@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { manualCountStations } from "../data";
 import { TrafficCount } from "../types";
-import { Language } from "../i18n";
+import { Language, splitVehicleTask, translateRole, translateStationLabel, ui } from "../i18n";
 import { ClipboardList, MapPin, UserRound } from "lucide-react";
 
 interface CountsDashboardProps {
@@ -13,19 +13,15 @@ interface CountsDashboardProps {
   language?: Language;
 }
 
-const splitVehicleTask = (task: string) =>
-  task
-    .split("،")
-    .map((item) => item.trim())
-    .filter(Boolean);
-
 export const CountsDashboard: React.FC<CountsDashboardProps> = ({
   hourlyData,
   selectedJunction,
   onSelectJunction,
   language = "ar"
 }) => {
+  const activeLanguage = language as Language;
   const isEn = language === "en";
+  const t = ui[activeLanguage];
 
   const stationVolumes = useMemo(() => {
     const totals: Record<string, number> = {};
@@ -84,16 +80,16 @@ export const CountsDashboard: React.FC<CountsDashboardProps> = ({
                   >
                     <h4 className="text-white font-bold text-lg flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-emerald-400" />
-                      {station.code} - {station.label}
+                      {station.code} - {translateStationLabel(station.code, station.label, activeLanguage)}
                     </h4>
                     <p className="text-slate-400 text-xs mt-1 font-mono">
                       E {station.x.toFixed(1)} | N {station.y.toFixed(1)}
                     </p>
                   </button>
                   <div className="text-left shrink-0">
-                    <div className="text-indigo-300 text-xs font-bold">{station.peopleCount} أفراد</div>
+                    <div className="text-indigo-300 text-xs font-bold">{station.peopleCount} {t.people}</div>
                     <div className="text-slate-500 text-[10px] mt-1">
-                      {stationVolumes[station.code]?.toLocaleString() || 0} مركبة
+                      {stationVolumes[station.code]?.toLocaleString() || 0} {t.vehicles}
                     </div>
                   </div>
                 </div>
@@ -107,14 +103,14 @@ export const CountsDashboard: React.FC<CountsDashboardProps> = ({
                           {person.id}
                         </span>
                         <span className="text-[10px] text-emerald-300 bg-emerald-950/40 border border-emerald-800/40 rounded px-2 py-1">
-                          {person.role}
+                          {translateRole(person.role, activeLanguage)}
                         </span>
                       </div>
                       <div className="text-[10px] text-slate-500 mb-1">
                         {isEn ? "Assigned vehicle classes" : "المركبات المخصصة للرصد"}
                       </div>
                       <ul className="space-y-1">
-                        {splitVehicleTask(person.task).map((vehicle) => (
+                        {splitVehicleTask(person.task, activeLanguage).map((vehicle) => (
                           <li key={vehicle} className="flex items-start gap-2 text-xs text-slate-300 leading-5">
                             <span className="mt-2 h-1.5 w-1.5 rounded-full bg-indigo-400 shrink-0"></span>
                             <span>{vehicle}</span>

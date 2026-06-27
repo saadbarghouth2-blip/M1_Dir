@@ -3,7 +3,7 @@ import { junctions, manualCountStations, directions, zones } from "../data";
 import { Junction, Direction, Zone, ManualCountStation, TrafficCount } from "../types";
 import { utmToLatLng } from "../utils/geo";
 import { Compass, AlertCircle, RefreshCw, Layers, ZoomIn, Info } from "lucide-react";
-import { Language, ui } from "../i18n";
+import { getDirectionRole, Language, splitVehicleTask, translateRole, translateStationLabel, ui } from "../i18n";
 
 interface MapWidgetProps {
   activeTab: "COUNTS" | "DIRECTIONS";
@@ -192,14 +192,14 @@ export const getBearing = (start: [number, number], end: [number, number]): numb
 };
 
 // 2. Dynamic high-tech vector avatar/person symbology helper that varies per point
-export const getPersonIconHtml = (code: string, isSelected: boolean, groupColor: string, loadPercentage: number) => {
+export const getPersonIconHtml = (code: string, isSelected: boolean, groupColor: string, loadPercentage: number, language: Language) => {
   const group = code.split("-")[0];
   let avatarSvg = "";
-  let roleTitle = "راصد";
+  let roleTitle = translateRole("راصد", language);
   
   switch (group) {
     case "J2":
-      roleTitle = "رائد حركة";
+      roleTitle = getDirectionRole(code, language);
       avatarSvg = `
         <g stroke="${groupColor}" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="8" r="3" fill="${groupColor}" fill-opacity="0.25"/>
@@ -210,7 +210,7 @@ export const getPersonIconHtml = (code: string, isSelected: boolean, groupColor:
       `;
       break;
     case "J3":
-      roleTitle = "مهندس حركة";
+      roleTitle = getDirectionRole(code, language);
       avatarSvg = `
         <g stroke="${groupColor}" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="8" r="3" fill="${groupColor}" fill-opacity="0.25"/>
@@ -221,7 +221,7 @@ export const getPersonIconHtml = (code: string, isSelected: boolean, groupColor:
       `;
       break;
     case "J4":
-      roleTitle = "مشرف شبكة";
+      roleTitle = getDirectionRole(code, language);
       avatarSvg = `
         <g stroke="${groupColor}" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="8" r="3" fill="${groupColor}" fill-opacity="0.25"/>
@@ -234,7 +234,7 @@ export const getPersonIconHtml = (code: string, isSelected: boolean, groupColor:
       `;
       break;
     case "J5":
-      roleTitle = "فني صيانة";
+      roleTitle = getDirectionRole(code, language);
       avatarSvg = `
         <g stroke="${groupColor}" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="8" r="3" fill="${groupColor}" fill-opacity="0.25"/>
@@ -245,7 +245,7 @@ export const getPersonIconHtml = (code: string, isSelected: boolean, groupColor:
       `;
       break;
     case "J6":
-      roleTitle = "خبير ذكاء";
+      roleTitle = getDirectionRole(code, language);
       avatarSvg = `
         <g stroke="${groupColor}" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="8" r="3" fill="${groupColor}" fill-opacity="0.25"/>
@@ -256,7 +256,7 @@ export const getPersonIconHtml = (code: string, isSelected: boolean, groupColor:
       `;
       break;
     case "J7":
-      roleTitle = "مراقب بلدي";
+      roleTitle = getDirectionRole(code, language);
       avatarSvg = `
         <g stroke="${groupColor}" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="8" r="3" fill="${groupColor}" fill-opacity="0.25"/>
@@ -268,7 +268,7 @@ export const getPersonIconHtml = (code: string, isSelected: boolean, groupColor:
       break;
     case "J8":
     default:
-      roleTitle = "راصد ميداني";
+      roleTitle = getDirectionRole(code, language);
       avatarSvg = `
         <g stroke="${groupColor}" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="8" r="3" fill="${groupColor}" fill-opacity="0.25"/>
@@ -340,7 +340,8 @@ export const MapWidget: React.FC<MapWidgetProps> = ({
   hourlyData,
   language = "ar"
 }) => {
-  const t = ui[language];
+  const activeLanguage = language as Language;
+  const t = ui[activeLanguage];
   const isCountsMode = activeTab === "COUNTS";
   const [mapProvider, setMapProvider] = useState<MapProvider>("DARK");
   const [leafletLoaded, setLeafletLoaded] = useState(false);
@@ -590,7 +591,7 @@ export const MapWidget: React.FC<MapWidgetProps> = ({
         dashArray: "4, 4"
       }).addTo(layersGroupRef.current);
 
-      polygon.bindTooltip(`<div class="text-right text-xs font-sans"><b>المنطقة المرورية ${zone.code}</b><br>رقم المنطقة: ${zone.id}<br>المساحة: ${zone.area.toFixed(0)} م²</div>`, {
+      polygon.bindTooltip(`<div class="text-right text-xs font-sans"><b>${t.zone} ${zone.code}</b><br>${t.zoneNumber}: ${zone.id}<br>${t.area}: ${zone.area.toFixed(0)} ${t.squareMeter}</div>`, {
         sticky: true,
         className: "custom-leaflet-tooltip"
       });
@@ -697,24 +698,24 @@ export const MapWidget: React.FC<MapWidgetProps> = ({
       const tooltipContent = isCountsMode ? `
         <div class="text-right font-sans text-xs p-1 w-[250px] max-w-[250px]">
           <div class="font-bold text-white mb-1 flex items-center justify-between gap-3">
-            <span style="color: ${color};">مسار حركة ${dir.dir}</span>
-            <span class="bg-indigo-950/80 px-1.5 py-0.5 rounded font-mono text-[9px] text-indigo-400">حجم المرور والعد</span>
+            <span style="color: ${color};">${t.route} ${dir.dir}</span>
+            <span class="bg-indigo-950/80 px-1.5 py-0.5 rounded font-mono text-[9px] text-indigo-400">${t.trafficCount}</span>
           </div>
-          <div class="text-slate-300">حالة تدفق السير: <span class="font-bold" style="color: ${color};">${stats.volume > 1500 ? "مزدحم ومتباطئ" : stats.volume > 800 ? "متوسط وكثيف" : "سلس وانسيابي"}</span></div>
-          <div class="text-slate-300">حجم التدفق الحالي: <span class="font-bold text-white font-mono">${stats.volume.toLocaleString()}</span> مركبة/ساعة</div>
-          <div class="text-slate-300">السرعة التشغيلية: <span class="font-bold text-amber-400 font-mono">${stats.speed} كم/ساعة</span></div>
-          <div class="text-[10px] text-indigo-300 mt-1.5 border-t border-slate-800/60 pt-1">انقر للتصفية السريعة للمسار</div>
+          <div class="text-slate-300">${t.trafficFlowState}: <span class="font-bold" style="color: ${color};">${stats.volume > 1500 ? t.congestedSlow : stats.volume > 800 ? t.mediumDense : t.smooth}</span></div>
+          <div class="text-slate-300">${t.currentFlowVolume}: <span class="font-bold text-white font-mono">${stats.volume.toLocaleString()}</span> ${t.vehiclesPerHour}</div>
+          <div class="text-slate-300">${t.operatingSpeed}: <span class="font-bold text-amber-400 font-mono">${stats.speed} ${t.kmPerHour}</span></div>
+          <div class="text-[10px] text-indigo-300 mt-1.5 border-t border-slate-800/60 pt-1">${t.quickRouteFilter}</div>
         </div>
       ` : `
         <div class="text-right font-sans text-xs p-1 w-[250px] max-w-[250px]">
           <div class="font-bold text-white mb-1 flex items-center justify-between gap-3">
-            <span style="color: ${color};">مسار حركة ${dir.dir}</span>
-            <span class="bg-indigo-950/80 px-1.5 py-0.5 rounded font-mono text-[9px]" style="color: ${color};">الراصد: ${dir.member_code}</span>
+            <span style="color: ${color};">${t.route} ${dir.dir}</span>
+            <span class="bg-indigo-950/80 px-1.5 py-0.5 rounded font-mono text-[9px]" style="color: ${color};">${t.observer}: ${dir.member_code}</span>
           </div>
-          <div class="text-slate-300">توزيع الاتجاهات: <span class="font-bold font-mono" style="color: ${color};">${dir.dir}</span></div>
-          <div class="text-slate-300">التدفق المرصود الحالي: <span class="font-bold text-white font-mono">${stats.volume.toLocaleString()}</span> مركبة/ساعة</div>
-          <div class="text-slate-300">السرعة التشغيلية: <span class="font-bold text-amber-400 font-mono">${stats.speed} كم/ساعة</span></div>
-          <div class="text-[10px] text-indigo-300 mt-1.5 border-t border-slate-800/60 pt-1">انقر للتصفية السريعة للمسار</div>
+          <div class="text-slate-300">${t.directionDistribution}: <span class="font-bold font-mono" style="color: ${color};">${dir.dir}</span></div>
+          <div class="text-slate-300">${t.observedCurrentFlow}: <span class="font-bold text-white font-mono">${stats.volume.toLocaleString()}</span> ${t.vehiclesPerHour}</div>
+          <div class="text-slate-300">${t.operatingSpeed}: <span class="font-bold text-amber-400 font-mono">${stats.speed} ${t.kmPerHour}</span></div>
+          <div class="text-[10px] text-indigo-300 mt-1.5 border-t border-slate-800/60 pt-1">${t.quickRouteFilter}</div>
         </div>
       `;
 
@@ -844,7 +845,7 @@ export const MapWidget: React.FC<MapWidgetProps> = ({
             
             <div class="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-950/95 border border-slate-800 text-[8px] font-bold px-1.5 py-0.5 rounded shadow-lg flex items-center gap-1 z-10">
               <span class="text-white font-mono">${j.code}</span>
-              <span class="text-slate-300 font-mono">${manualStation?.peopleCount || 0} أفراد</span>
+              <span class="text-slate-300 font-mono">${manualStation?.peopleCount || 0} ${t.people}</span>
               <span class="${statusTextColor} font-mono">${loadPercentage}%</span>
             </div>
           </div>
@@ -852,7 +853,7 @@ export const MapWidget: React.FC<MapWidgetProps> = ({
       } else {
         // DIRECTIONS/Observers Mode: High-Tech Person Symbology Marker
         const groupColor = getPersonColor(j.code);
-        iconHtml = getPersonIconHtml(j.code, isSelected, groupColor, loadPercentage);
+        iconHtml = getPersonIconHtml(j.code, isSelected, groupColor, loadPercentage, activeLanguage);
       }
 
       const customIcon = L.divIcon({
@@ -870,42 +871,36 @@ export const MapWidget: React.FC<MapWidgetProps> = ({
 
       // Get appropriate role name for tooltip
       const group = j.code.split("-")[0];
-      let roleTitle = "راصد ميداني";
-      if (group === "J2") roleTitle = "رائد حركة";
-      else if (group === "J3") roleTitle = "مهندس حركة";
-      else if (group === "J4") roleTitle = "مشرف شبكة";
-      else if (group === "J5") roleTitle = "فني صيانة";
-      else if (group === "J6") roleTitle = "خبير ذكاء";
-      else if (group === "J7") roleTitle = "مراقب بلدي";
+      const roleTitle = getDirectionRole(j.code, activeLanguage);
 
       const groupColor = getPersonColor(j.code);
-      const stationLabel = manualStation ? manualStation.label : j.code;
+      const stationLabel = manualStation ? translateStationLabel(manualStation.code, manualStation.label, activeLanguage) : j.code;
       const stationPeopleCount = manualStation ? manualStation.peopleCount : 0;
 
       const tooltipText = isCountsMode ? `
         <div class="text-right font-sans text-xs p-1 w-[250px] max-w-[250px]">
           <div class="font-bold text-white mb-1 flex items-center justify-between gap-3">
             <span class="text-indigo-400">${j.code} - ${stationLabel}</span>
-            <span class="bg-indigo-950/80 px-1.5 py-0.5 rounded font-mono text-[9px] text-indigo-400">${stationPeopleCount} أفراد</span>
+            <span class="bg-indigo-950/80 px-1.5 py-0.5 rounded font-mono text-[9px] text-indigo-400">${stationPeopleCount} ${t.people}</span>
           </div>
-          <div class="text-slate-300">معدل الإشغال اللحظي: <span class="font-bold font-mono ${
+          <div class="text-slate-300">${t.currentOccupancy}: <span class="font-bold font-mono ${
             loadPercentage > 75 ? "text-red-400" : loadPercentage > 40 ? "text-amber-400" : "text-emerald-400"
           }">${loadPercentage}%</span></div>
-          <div class="text-slate-300">إجمالي التدفق المار: <span class="font-mono text-white font-bold">${junctionVolume.toLocaleString()}</span> مركبة/ساعة</div>
-          <div class="mt-1.5 text-[10px] text-indigo-300 font-bold">اضغط على رمز كل شخص لعرض المركبات المخصصة له فقط.</div>
+          <div class="text-slate-300">${t.totalPassingFlow}: <span class="font-mono text-white font-bold">${junctionVolume.toLocaleString()}</span> ${t.vehiclesPerHour}</div>
+          <div class="mt-1.5 text-[10px] text-indigo-300 font-bold">${t.clickPersonOnly}</div>
           <div class="text-[9px] text-slate-400 mt-1 font-mono text-left">E: ${j.x.toFixed(1)} | N: ${j.y.toFixed(1)}</div>
-          <div class="text-[10px] text-indigo-300 mt-0.5">انقر لتصفية التقارير لهذه المحطة</div>
+          <div class="text-[10px] text-indigo-300 mt-0.5">${t.filterStation}</div>
         </div>
       ` : `
         <div class="text-right font-sans text-xs p-1 w-[250px] max-w-[250px]">
           <div class="font-bold text-white mb-1 flex items-center justify-between gap-3">
             <span style="color: ${groupColor};">${roleTitle} (${j.code})</span>
-            <span class="bg-indigo-950/80 px-1.5 py-0.5 rounded font-mono text-[9px] text-indigo-400 font-bold">طاقم الرصد الميداني</span>
+            <span class="bg-indigo-950/80 px-1.5 py-0.5 rounded font-mono text-[9px] text-indigo-400 font-bold">${t.fieldCrew}</span>
           </div>
-          <div class="text-slate-300">معدل التحميل المرصود: <span class="font-bold font-mono" style="color: ${groupColor};">${loadPercentage}%</span></div>
-          <div class="text-slate-300">إجمالي التدفق النشط: <span class="font-mono text-indigo-400 font-bold">${junctionVolume.toLocaleString()}</span> مركبة/ساعة</div>
+          <div class="text-slate-300">${t.observedLoad}: <span class="font-bold font-mono" style="color: ${groupColor};">${loadPercentage}%</span></div>
+          <div class="text-slate-300">${t.activeFlowTotal}: <span class="font-mono text-indigo-400 font-bold">${junctionVolume.toLocaleString()}</span> ${t.vehiclesPerHour}</div>
           <div class="text-[9px] text-slate-400 mt-1 font-mono text-left">E: ${j.x.toFixed(1)} | N: ${j.y.toFixed(1)}</div>
-          <div class="text-[10px] text-indigo-300 mt-0.5">انقر لتصفية التقارير لهذا التقاطع</div>
+          <div class="text-[10px] text-indigo-300 mt-0.5">${t.filterJunction}</div>
         </div>
       `;
 
@@ -915,19 +910,16 @@ export const MapWidget: React.FC<MapWidgetProps> = ({
 
       if (isCountsMode && manualStation) {
         const crewOffsets = [
-          { lat: 0.00017, lng: 0, side: "أعلى", arrow: "↑" },
-          { lat: 0, lng: 0.00020, side: "يمين", arrow: "→" },
-          { lat: -0.00017, lng: 0, side: "أسفل", arrow: "↓" },
-          { lat: 0, lng: -0.00020, side: "شمال", arrow: "←" },
-          { lat: 0.00015, lng: -0.00018, side: "شمال أعلى", arrow: "↖" }
+          { lat: 0.00017, lng: 0, side: activeLanguage === "en" ? "Top" : "أعلى", arrow: "↑" },
+          { lat: 0, lng: 0.00020, side: activeLanguage === "en" ? "Right" : "يمين", arrow: "→" },
+          { lat: -0.00017, lng: 0, side: activeLanguage === "en" ? "Bottom" : "أسفل", arrow: "↓" },
+          { lat: 0, lng: -0.00020, side: activeLanguage === "en" ? "Left" : "شمال", arrow: "←" },
+          { lat: 0.00015, lng: -0.00018, side: activeLanguage === "en" ? "Upper left" : "شمال أعلى", arrow: "↖" }
         ];
 
         manualStation.crew.forEach((person, index) => {
           const personColor = getPersonColor(person.id);
-          const personTaskHtml = person.task
-            .split("،")
-            .map((taskPart) => taskPart.trim())
-            .filter(Boolean)
+          const personTaskHtml = splitVehicleTask(person.task, activeLanguage)
             .map((taskPart) => `
               <li class="flex items-start gap-1.5">
                 <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full" style="background-color: ${personColor};"></span>
@@ -938,7 +930,7 @@ export const MapWidget: React.FC<MapWidgetProps> = ({
           const offset = crewOffsets[index] || {
             lat: -0.00017,
             lng: -0.00020 + ((index - crewOffsets.length + 1) * 0.00008),
-            side: "إضافي",
+            side: activeLanguage === "en" ? "Extra" : "إضافي",
             arrow: "•"
           };
 
@@ -968,9 +960,9 @@ export const MapWidget: React.FC<MapWidgetProps> = ({
             <div class="text-right font-sans text-xs p-1 w-[250px] max-w-[250px]">
               <div class="font-bold text-white mb-1 flex items-center justify-between gap-3">
                 <span style="color: ${personColor};">${person.id}</span>
-                <span class="bg-slate-950/80 px-1.5 py-0.5 rounded text-[9px]" style="color: ${personColor};">${person.role}</span>
+                <span class="bg-slate-950/80 px-1.5 py-0.5 rounded text-[9px]" style="color: ${personColor};">${translateRole(person.role, activeLanguage)}</span>
               </div>
-              <div class="text-[10px] text-slate-400 mb-1">موقع الشخص حول النقطة: <span style="color: ${personColor};">${offset.side}</span></div>
+              <div class="text-[10px] text-slate-400 mb-1">${t.personPosition}: <span style="color: ${personColor};">${offset.side}</span></div>
               <ul class="text-slate-300 leading-5 space-y-0.5 m-0 p-0 list-none">${personTaskHtml}</ul>
               <div class="text-[9px] text-slate-500 mt-1 font-mono">${manualStation.code} - ${manualStation.label}</div>
             </div>
@@ -1024,7 +1016,7 @@ export const MapWidget: React.FC<MapWidgetProps> = ({
       clearInterval(intervalId);
     };
 
-  }, [leafletLoaded, selectedJunction, selectedDirection, hourlyData, directionVolumes, activeTab, simSpeed, vehicleDensity, activeTypeFilter, isPaused]);
+  }, [leafletLoaded, selectedJunction, selectedDirection, hourlyData, directionVolumes, activeTab, simSpeed, vehicleDensity, activeTypeFilter, isPaused, activeLanguage, t]);
 
   return (
     <div
@@ -1115,7 +1107,7 @@ export const MapWidget: React.FC<MapWidgetProps> = ({
           onClick={() => setIsMapExpanded((value) => !value)}
           className="absolute top-3 left-3 sm:hidden bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-3 py-2 text-[11px] font-bold shadow-2xl z-[1000] backdrop-blur-md"
         >
-          {isMapExpanded ? "خروج" : "تكبير الخريطة"}
+          {isMapExpanded ? t.exitMap : t.expandMap}
         </button>
 
         <button
@@ -1123,7 +1115,7 @@ export const MapWidget: React.FC<MapWidgetProps> = ({
           onClick={() => setIsLegendOpen((value) => !value)}
           className="absolute bottom-3 left-3 sm:hidden bg-slate-900/95 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-[11px] font-bold shadow-2xl z-[1000] backdrop-blur-md"
         >
-          {isLegendOpen ? "إخفاء المفتاح" : "مفتاح الخريطة"}
+          {isLegendOpen ? t.hideLegend : t.showLegend}
         </button>
 
         {/* Legend Overlay */}
@@ -1141,46 +1133,46 @@ export const MapWidget: React.FC<MapWidgetProps> = ({
             <>
               {/* Counts mode description */}
               <div className="flex flex-col gap-1 bg-slate-950/40 p-2 rounded border border-slate-800/80">
-                <div className="text-[9px] font-bold text-indigo-400 uppercase tracking-wider">تلوين الكثافة والتدفق</div>
+                <div className="text-[9px] font-bold text-indigo-400 uppercase tracking-wider">{t.densityColoring}</div>
                 <p className="text-slate-400 text-[9px] leading-relaxed">
-                  يتم تلوين مسارات الطرق ديناميكياً بناءً على حجم السيارات في الساعة (الأحمر = ازدحام، الأخضر = انسيابي).
+                  {t.densityColoringText}
                 </p>
               </div>
 
               {/* Counts mode road statuses */}
               <div className="flex flex-col gap-1.5">
-                <div className="text-[9px] font-bold text-indigo-400 uppercase tracking-wider">حالة انسياب المسارات</div>
+                <div className="text-[9px] font-bold text-indigo-400 uppercase tracking-wider">{t.routeFlowStatus}</div>
                 <div className="flex flex-col gap-1 text-[9px]">
                   <div className="flex items-center gap-1.5">
                     <span className="w-3 h-1.5 rounded-full bg-[#ef4444]"></span>
-                    <span className="text-slate-200">تدفق كثيف ومزدحم (&gt; 1500 مركبة/ساعة)</span>
+                    <span className="text-slate-200">{t.heavyCongestedFlow}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="w-3 h-1.5 rounded-full bg-[#f59e0b]"></span>
-                    <span className="text-slate-200">تدفق متوسط ونشط (800 - 1500)</span>
+                    <span className="text-slate-200">{t.mediumActiveFlow}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="w-3 h-1.5 rounded-full bg-[#10b981]"></span>
-                    <span className="text-slate-200">تدفق منخفض وسلس (&lt; 800)</span>
+                    <span className="text-slate-200">{t.lowSmoothFlow}</span>
                   </div>
                 </div>
               </div>
 
               {/* Counts mode junction statuses */}
               <div className="flex flex-col gap-1.5 border-t border-slate-800/60 pt-2">
-                <div className="text-[9px] font-bold text-indigo-400 uppercase tracking-wider">كواشف محطات الرصد</div>
+                <div className="text-[9px] font-bold text-indigo-400 uppercase tracking-wider">{t.detectors}</div>
                 <div className="flex flex-col gap-1 text-[9px]">
                   <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                    <span className="text-slate-200">معدل إشغال حرج (&gt; 75% من السعة)</span>
+                    <span className="text-slate-200">{t.criticalOccupancy}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                    <span className="text-slate-200">معدل إشغال متوسط (40% - 75% من السعة)</span>
+                    <span className="text-slate-200">{t.mediumOccupancy}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                    <span className="text-slate-200">معدل إشغال منخفض (&lt; 40% من السعة)</span>
+                    <span className="text-slate-200">{t.lowOccupancy}</span>
                   </div>
                 </div>
               </div>
@@ -1259,7 +1251,7 @@ export const MapWidget: React.FC<MapWidgetProps> = ({
               </div>
             </div>
             <p className="text-slate-400 text-[8px] leading-normal mt-0.5">
-              تتحرك المركبات بالاتجاه الصحيح وبسرعة تترابط لحظياً مع السرعة التشغيلية الفعلية للمسار.
+              {t.vehiclesMoveNote}
             </p>
           </div>
         </div>

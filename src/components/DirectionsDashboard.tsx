@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { directions, junctions } from "../data";
 import { TrafficCount } from "../types";
-import { Language } from "../i18n";
+import { Language, ui } from "../i18n";
 import { GitBranch, MapPin, Route, UserRound } from "lucide-react";
 import { getPersonColor } from "./MapWidget";
 
@@ -21,6 +21,7 @@ export const DirectionsDashboard: React.FC<DirectionsDashboardProps> = ({
   language = "ar"
 }) => {
   const isEn = language === "en";
+  const t = ui[language];
 
   const directionStats = useMemo(() => {
     const totals: Record<number, { volume: number; speedSum: number; count: number }> = {};
@@ -169,10 +170,10 @@ export const DirectionsDashboard: React.FC<DirectionsDashboardProps> = ({
                                     </span>
                                   </div>
                                   <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] text-slate-400">
-                                    <span>{isEn ? "Length" : "الطول"}: <b className="text-slate-200 font-mono">{direction.length.toFixed(1)}م</b></span>
+                                    <span>{isEn ? "Length" : "الطول"}: <b className="text-slate-200 font-mono">{direction.length.toFixed(1)}{t.meter}</b></span>
                                     <span>{isEn ? "Class" : "التصنيف"}: <b className="text-slate-200">{direction.classification}</b></span>
                                     <span>{isEn ? "Volume" : "الحجم"}: <b className="text-indigo-300 font-mono">{direction.volume.toLocaleString()}</b></span>
-                                    <span>{isEn ? "Speed" : "السرعة"}: <b className="text-amber-300 font-mono">{direction.speed || "-"} كم/س</b></span>
+                                    <span>{isEn ? "Speed" : "السرعة"}: <b className="text-amber-300 font-mono">{direction.speed || "-"} {isEn ? "km/h" : "كم/س"}</b></span>
                                   </div>
                                 </div>
                                 <span className="text-[10px] text-slate-500 shrink-0">
