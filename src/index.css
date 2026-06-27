@@ -1,0 +1,201 @@
+@import "tailwindcss";
+
+/* Leaflet Custom Styling to match the premium dark theme */
+.custom-leaflet-tooltip {
+  background-color: #0f172a !important; /* slate-900 */
+  border: 1px solid #1e293b !important; /* slate-800 */
+  border-radius: 8px !important;
+  color: #f1f5f9 !important; /* slate-100 */
+  padding: 8px 12px !important;
+  width: 280px !important;
+  max-width: calc(100vw - 48px) !important;
+  min-width: 240px !important;
+  white-space: normal !important;
+  overflow-wrap: break-word !important;
+  word-break: normal !important;
+  line-height: 1.55 !important;
+  direction: rtl !important;
+  text-align: right !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2) !important;
+  font-family: ui-sans-serif, system-ui, sans-serif !important;
+  opacity: 0.95 !important;
+}
+
+.custom-leaflet-tooltip::before {
+  border-right-color: #0f172a !important;
+}
+
+.custom-leaflet-tooltip .leaflet-popup-content-wrapper {
+  background-color: #0f172a !important;
+  border: 1px solid #1e293b !important;
+  border-radius: 8px !important;
+  color: #f1f5f9 !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2) !important;
+  direction: rtl !important;
+}
+
+.custom-leaflet-tooltip .leaflet-popup-content {
+  margin: 8px 12px !important;
+  width: 250px !important;
+  max-width: 250px !important;
+  white-space: normal !important;
+  overflow-wrap: break-word !important;
+}
+
+.custom-leaflet-tooltip .leaflet-popup-tip {
+  background-color: #0f172a !important;
+  border: 1px solid #1e293b !important;
+}
+
+.custom-leaflet-tooltip .leaflet-popup-close-button {
+  color: #cbd5e1 !important;
+}
+
+/* Premium GIS Symbology Styles */
+@keyframes leaflet-flow-fast {
+  to {
+    stroke-dashoffset: -30;
+  }
+}
+
+@keyframes leaflet-flow-medium {
+  to {
+    stroke-dashoffset: -30;
+  }
+}
+
+@keyframes leaflet-flow-slow {
+  to {
+    stroke-dashoffset: -30;
+  }
+}
+
+/* Dynamic traffic flow dash array animations representing car speed & flow */
+.traffic-flow-fast {
+  stroke-dasharray: 8, 10;
+  animation: leaflet-flow-fast 1.2s linear infinite;
+}
+
+.traffic-flow-medium {
+  stroke-dasharray: 6, 12;
+  animation: leaflet-flow-medium 2s linear infinite;
+}
+
+.traffic-flow-slow {
+  stroke-dasharray: 4, 15;
+  animation: leaflet-flow-slow 3.5s linear infinite;
+}
+
+/* Pulsing effect for custom sensor markers */
+@keyframes marker-pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.6);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(99, 102, 241, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+  }
+}
+
+.gis-sensor-node {
+  border-radius: 50%;
+  animation: marker-pulse 2s infinite;
+}
+
+/* Scrollbars for charts and tables */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Maintain proper left-to-right reading for direction labels */
+.direction-ltr {
+  direction: ltr !important;
+  unicode-bidi: embed !important;
+}
+
+/* Custom subtle animations */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 15s linear infinite;
+}
+
+@media (max-width: 640px) {
+  #gis-map-widget {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  #gis-map-widget .leaflet-container {
+    touch-action: pan-x pan-y;
+    user-select: none;
+  }
+
+  .leaflet-control-zoom a {
+    width: 44px !important;
+    height: 44px !important;
+    line-height: 44px !important;
+    font-size: 22px !important;
+  }
+
+  .leaflet-control-zoom {
+    margin-right: 12px !important;
+    margin-bottom: 70px !important;
+    border: 1px solid #334155 !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+  }
+
+  .leaflet-control-attribution {
+    max-width: 72vw !important;
+    font-size: 9px !important;
+    white-space: normal !important;
+  }
+
+  .custom-leaflet-tooltip {
+    width: calc(100vw - 64px) !important;
+    min-width: 220px !important;
+    max-width: calc(100vw - 64px) !important;
+    font-size: 11px !important;
+  }
+
+  .custom-leaflet-tooltip .leaflet-popup-content {
+    width: calc(100vw - 96px) !important;
+    max-width: calc(100vw - 96px) !important;
+  }
+
+  .custom-count-person-marker-icon,
+  .custom-junction-marker-icon,
+  .custom-direction-arrow-icon {
+    touch-action: manipulation;
+  }
+
+  .custom-count-person-marker-icon > div {
+    min-height: 44px !important;
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Traffic and Directions Dashboard",
+  "description": "Interactive dashboards for traffic counting and movement directions visualization.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
