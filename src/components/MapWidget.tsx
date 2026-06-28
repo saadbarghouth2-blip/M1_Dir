@@ -17,6 +17,13 @@ interface MapWidgetProps {
 
 type MapProvider = "DARK" | "STREET" | "SATELLITE";
 
+type CrewOffset = {
+  lat: number;
+  lng: number;
+  side: string;
+  arrow: string;
+};
+
 const pointColors = [
   "#38bdf8", "#22c55e", "#f43f5e", "#ec4899", "#eab308", "#a855f7",
   "#ff7300", "#06b6d4", "#10b981", "#6366f1", "#ef4444", "#f59e0b",
@@ -87,6 +94,36 @@ const getZoneColor = (code: string) => {
     case "G": return "#eab308";
     default: return "#94a3b8";
   }
+};
+
+const getCrewOffset = (personId: string, index: number, language: Language, crewCount: number): CrewOffset => {
+  const personNumber = Number(personId.split("-")[1] || index + 1);
+  const groupDistance = 0.00036;
+  const pairSpread = 0.00014;
+  const rowSpread = 0.00013;
+
+  if (crewCount <= 2) {
+    const isRight = personNumber % 2 === 1;
+
+    return {
+      lat: 0,
+      lng: isRight ? groupDistance : -groupDistance,
+      side: language === "en" ? (isRight ? "Right" : "Left") : (isRight ? "يمين" : "يسار"),
+      arrow: isRight ? "&#8594;" : "&#8592;"
+    };
+  }
+
+  const pairIndex = Math.floor((personNumber - 1) / 2);
+  const isRightGroup = pairIndex % 2 === 0;
+  const isRightInPair = personNumber % 2 === 1;
+  const rowOffset = pairIndex % 2 === 0 ? rowSpread : -rowSpread;
+
+  return {
+    lat: rowOffset,
+    lng: (isRightGroup ? groupDistance : -groupDistance) + (isRightInPair ? pairSpread : -pairSpread),
+    side: language === "en" ? (isRightGroup ? "Right" : "Left") : (isRightGroup ? "يمين" : "يسار"),
+    arrow: isRightGroup ? "&#8594;" : "&#8592;"
+  };
 };
 
 // Helper to calculate segment midpoint and orientation bearing in degrees (0 to 360)
@@ -909,14 +946,6 @@ export const MapWidget: React.FC<MapWidgetProps> = ({
       }
 
       if (isCountsMode && manualStation) {
-        const crewOffsets = [
-          { lat: 0.00017, lng: 0, side: activeLanguage === "en" ? "Top" : "أعلى", arrow: "↑" },
-          { lat: 0, lng: 0.00020, side: activeLanguage === "en" ? "Right" : "يمين", arrow: "→" },
-          { lat: -0.00017, lng: 0, side: activeLanguage === "en" ? "Bottom" : "أسفل", arrow: "↓" },
-          { lat: 0, lng: -0.00020, side: activeLanguage === "en" ? "Left" : "شمال", arrow: "←" },
-          { lat: 0.00015, lng: -0.00018, side: activeLanguage === "en" ? "Upper left" : "شمال أعلى", arrow: "↖" }
-        ];
-
         manualStation.crew.forEach((person, index) => {
           const personColor = getPersonColor(person.id);
           const personTaskHtml = splitVehicleTask(person.task, activeLanguage)
@@ -927,19 +956,14 @@ export const MapWidget: React.FC<MapWidgetProps> = ({
               </li>
             `)
             .join("");
-          const offset = crewOffsets[index] || {
-            lat: -0.00017,
-            lng: -0.00020 + ((index - crewOffsets.length + 1) * 0.00008),
-            side: activeLanguage === "en" ? "Extra" : "إضافي",
-            arrow: "•"
-          };
+          const offset = getCrewOffset(person.id, index, activeLanguage, manualStation.crew.length);
 
           const personIcon = L.divIcon({
             className: "custom-count-person-marker-icon",
             html: `
               <div class="relative h-10 min-w-20 px-2 rounded-lg bg-slate-950/95 border flex items-center justify-center gap-1.5 shadow-xl cursor-pointer"
                 style="border-color: ${personColor}; box-shadow: 0 0 12px ${personColor}70;">
-                <span class="text-[12px] font-black leading-none" style="color: ${personColor};">${offset.arrow}</span>
+                <span class="direction-ltr text-[12px] font-black leading-none" style="color: ${personColor};">${offset.arrow}</span>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <circle cx="12" cy="7" r="4" fill="${personColor}" fill-opacity="0.95"/>
                   <path d="M5 21c0-4 3-7 7-7s7 3 7 7" fill="${personColor}" fill-opacity="0.35" stroke="${personColor}" stroke-width="2" stroke-linecap="round"/>
@@ -1023,12 +1047,12 @@ export const MapWidget: React.FC<MapWidgetProps> = ({
       id="gis-map-widget"
       className={`bg-slate-900 border border-slate-800 shadow-2xl relative overflow-hidden flex flex-col ${
         isMapExpanded
-          ? "fixed inset-0 z-[9999] rounded-none p-3"
+          ? "fixed inset-0 z-[9999] rounded-none border-0 p-0"
           : "rounded-2xl p-3 sm:p-5 h-full"
       }`}
     >
       {/* Map Header Controls */}
-      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-3 mb-3 sm:mb-4 z-10">
+      <div className={`${isMapExpanded ? "hidden" : "flex"} flex-col lg:flex-row lg:justify-between lg:items-center gap-3 mb-3 sm:mb-4 z-10`}>
         <div className="min-w-0">
           <h3 className="text-white font-medium text-base sm:text-lg flex items-start sm:items-center gap-2 leading-snug">
             <Compass className="w-5 h-5 text-indigo-400 animate-spin-slow shrink-0 mt-0.5 sm:mt-0" />
@@ -1082,8 +1106,8 @@ export const MapWidget: React.FC<MapWidgetProps> = ({
 
       {/* Map Element Wrapper */}
       <div
-        className={`relative flex-1 bg-slate-950 rounded-xl border border-slate-800 overflow-hidden flex items-center justify-center ${
-          isMapExpanded ? "min-h-[calc(100dvh-145px)]" : "min-h-[70dvh] sm:min-h-[620px]"
+        className={`relative flex-1 bg-slate-950 overflow-hidden flex items-center justify-center ${
+          isMapExpanded ? "min-h-screen rounded-none border-0" : "min-h-[70dvh] sm:min-h-[620px] rounded-xl border border-slate-800"
         }`}
       >
         {!leafletLoaded ? (
@@ -1096,7 +1120,7 @@ export const MapWidget: React.FC<MapWidgetProps> = ({
             ref={mapContainerRef}
             className={`w-full z-0 ${
               isMapExpanded
-                ? "h-[calc(100dvh-145px)]"
+                ? "h-screen"
                 : "h-[70dvh] min-h-[520px] sm:h-[620px] lg:h-[72vh]"
             }`}
           />
@@ -1105,7 +1129,7 @@ export const MapWidget: React.FC<MapWidgetProps> = ({
         <button
           type="button"
           onClick={() => setIsMapExpanded((value) => !value)}
-          className="absolute top-3 left-3 sm:hidden bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-3 py-2 text-[11px] font-bold shadow-2xl z-[1000] backdrop-blur-md"
+          className="absolute top-3 left-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-3 py-2 text-[11px] sm:text-xs font-bold shadow-2xl z-[1000] backdrop-blur-md"
         >
           {isMapExpanded ? t.exitMap : t.expandMap}
         </button>
